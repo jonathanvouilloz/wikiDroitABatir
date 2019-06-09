@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Les pools de bâtiments</title>
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+</head>
+<body>
+<nav class="navbar navbar-expand navbar-dark bg-dark">
+    <a class="navbar-brand" href="index.html">DABs</a>
+    <div class="collapse navbar-collapse" id="navbar">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="index.html">Home <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="pool.html">Les pools de bâtiments</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+<div class="container">
+    <form>
+        <div class="form-group">
+            <label for="batimentpool">Bâtiments du pool</label>
+            <input type="text" class="form-control" id="batimentpool" aria-describedby="batimentpoolHelp"
+                   placeholder="Entrez les bâtiments du pool">
+            <small id="batimentpoolHelp" class="form-text text-muted">Les bâtiments doivent êtres séparés par une
+                virgule.
+            </small>
+        </div>
+        <button type="submit" id="ajouterpool" class="btn btn-primary" id="ajouterpool">Ajouter</button>
+    </form>
+</div>
+<div class="container">
+    <h4>Tous les pools de bâtiments</h4>
+    <table id="tablePool" class="table"></table>
+</div>
+</body>
+</html>
+
+<script>
+    var secretKey = "SDOO2MGB2EON4AQ4CYGTJTXZUDBJHIVZJNRVF5C3WRCVOPJDB5Q53FB6";
+    var idmax = 0;
+
+    chargerPools();
+
+    document.getElementById("ajouterpool").addEventListener("click", function() {
+      ajouterPool();
+    }, false);
+
+    function chargerPools() {
+        $("#tablePool").html("");
+        $("#tablePool").append("<thead><tr><th>#</th><th>Les bâtiments</th><th>Actions</th></tr></thead>");
+        $.get("http://groups.cowaboo.net/2019/group11%20-%20Les%20droits%20%20btir%20%20GVA/public/api/tags", function (reponse) {
+            $.each(reponse.tag_list.list, function (key, value) {
+                var pool = chargerUnPool(key);
+                $("#tablePool").append("<tr id='tr" + pool.dictionary.date + "'><td>" + pool.dictionary.id + "</td><td id='batiment" + pool.dictionary.date + "'></td><td><input type='text' class='form-control' placeholder='Modifier les bâtiments'><button type='button' class='btn btn-warning'>Modifier</button><button type='button' class='btn btn-danger' id='deletepool'>Supprimer</button></td></tr>");
+                $.each(pool.dictionary.entries, function (key, value) {
+                    if (value.tags == "||Batiment||") $("#batiment" + pool.dictionary.date).append(value.value);
+                });
+                idmax++;
+                document.getElementById("deletepool").addEventListener("click", function() {
+                    supprimerPool(pool.dictionary.id);
+                }, false);
+            })
+        });
+    }
+
+    function chargerUnPool(key) {
+        var pool = "";
+        $.ajax({
+            url: "http://groups.cowaboo.net/2019/group11%20-%20Les%20droits%20%20btir%20%20GVA/public/api/observatory?observatoryId=" + key,
+            async: false
+        }).done(function (reponse) {
+            pool = reponse;
+        });
+        return pool;
+    }
+
+    function delPool(){
+        var pool_nom = "6"
+
+        $.delete("http://groups.cowaboo.net/2019/group11%20-%20Les%20droits%20%20btir%20%20GVA/public/api/observatory", {
+            "secretKey": sKey,
+            "observatoryId": pool_nom
+        }).done(function (reponse) {
+            chargerPools();
+        });
+
+        $.delete = function(url, data, callback, type){
+
+            if ( $.isFunction(data) ){
+                type = type || callback,
+                    callback = data,
+                    data = {}
+            }
+
+            return $.ajax({
+                url: url,
+                type: 'DELETE',
+                success: callback,
+                data: data,
+                contentType: type
+            });
+        }
+    }
+
+    function ajouterPool() {
+        var pool_id = "100";
+        var batiment_liste = document.getElementById("batimentpool").value;
+
+        console.log(batiment_liste);
+
+        $.post("http://groups.cowaboo.net/2019/group11%20-%20Les%20droits%20%20btir%20%20GVA/public/api/observatory", {
+            "secretKey": secretKey,
+            "observatoryId": pool_id
+        }).done(function (reponse) {
+            alert('les informations complémentaires peuvent mettre du temps à apparaître');
+            $.post("http://groups.cowaboo.net/2019/group11%20-%20Les%20droits%20%20btir%20%20GVA/public/api/entry", {
+                "secretKey": secretKey,
+                "observatoryId": pool_id,
+                "tags" : "Batiment",
+                "value" : batiment_liste
+            })
+        });
+        $.post("http://groups.cowaboo.net/2019/group11%20-%20Les%20droits%20%20btir%20%20GVA/public/api/observatory", {
+            "secretKey": secretKey,
+            "observatoryId": pool_id
+        }).done(function (reponse) {
+            $.post("http://groups.cowaboo.net/2019/group11%20-%20Les%20droits%20%20btir%20%20GVA/public/api/entry", {
+                "secretKey": secretKey,
+                "observatoryId": pool_id,
+                "tags" : "Batiment",
+                "value" : batiment_liste
+            })
+        });
+    }
+</script>
